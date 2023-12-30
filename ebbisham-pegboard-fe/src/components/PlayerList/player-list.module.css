@@ -1,0 +1,29 @@
+.playerQueue{
+    margin-top: 2rem;
+}
+
+.playerQueueItem {
+    display: flex;
+    justify-content: space-between;
+}
+
+.playerQueueItemName {
+    margin: 4px 0 0 0;
+}
+
+.playerQueueItemNamePaused {
+    opacity: 0.5;
+}
+
+.playerQueueItemButton {
+    margin-left: 1rem;
+}
+
+.pausedPlayer {
+    opacity: 0.5;
+}
+
+.inputRow{
+    display: flex;
+    justify-content: space-evenly;
+}
