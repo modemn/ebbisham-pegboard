@@ -10,6 +10,7 @@ import Combobox from "react-widgets/Combobox";
 import styles from './player-list.module.css';
 import { TPlayer } from '@utils/types';
 import { useGlobalStore } from '@utils/store';
+import PlayerListItem from './PlayerListItem/PlayerListItem';
 
 const PlayerList: React.FC = () => {
   const [players] = useGlobalStore((state) => [state.players])
@@ -19,8 +20,6 @@ const PlayerList: React.FC = () => {
   const [setPlayersInQueue] = useGlobalStore((state) => [state.setPlayersInQueue])
   const [setPausedPlayers] = useGlobalStore((state) => [state.setPausedPlayers])
   const [addPlayerToQueue] = useGlobalStore((state) => [state.addPlayerToQueue])
-  const [togglePausePlayer] = useGlobalStore((state) => [state.togglePausePlayer])
-  const [setIsStopPlayerModalOpen] = useGlobalStore((state) => [state.setIsStopPlayerModalOpen])
   const [setIsAddNewPlayerModalOpen] = useGlobalStore((state) => [state.setIsAddNewPlayerModalOpen])
 
   const [comboBoxInput, setComboBoxInput] = useState('')
@@ -30,10 +29,6 @@ const PlayerList: React.FC = () => {
 		{}
 	)
 
-  const isPlayerPaused = (playerId: string) => {
-    return pausedPlayers.has(playerId)
-  };
-
   useEffect(() => {
     if (!usersLoading && !usersError && users) {
       const allPlayersFromDB = users.docs.map((doc) => ({ id: doc.id, ...doc.data() } as TPlayer))
@@ -42,7 +37,7 @@ const PlayerList: React.FC = () => {
       });
       setPlayers(stoppedPlayersFromDB)
       const playersInQueueFromDB = allPlayersFromDB.filter((player) => {
-        return player.playStatus === 'playing' || player.playStatus === 'paused';
+        return player.playStatus === 'playing';
       });
       setPlayersInQueue(playersInQueueFromDB)
       const pausedPlayerFromDB = allPlayersFromDB.filter((player) => {
@@ -82,42 +77,32 @@ const PlayerList: React.FC = () => {
         <i className="bi bi-person-fill-add" />
       </Button>
       </div>
+      
+      {Array.from(playersInQueue.values()).length === 0 && Array.from(pausedPlayers.values()).length === 0 && <p className={styles.noPlayers}>No players in queue.</p>}
       {Array.from(playersInQueue.values()).length > 0 &&
+        <>
+          <h4 className={styles.playersTitle}>Playing</h4>
+          <ListGroup className={styles.playerQueue}>
+            {Array.from(playersInQueue.values()).map((player: TPlayer) => {
+              return (
+                <PlayerListItem key={player.id} player={player} />
+              )
+            })}
+          </ListGroup>
+        </>
+      }
+      {Array.from(pausedPlayers.values()).length > 0 && <h4 className={styles.playersTitle}>Paused</h4>}
+      {Array.from(pausedPlayers.values()).length > 0 &&
         <ListGroup className={styles.playerQueue}>
-          {Array.from(playersInQueue.values()).map((player: TPlayer) => {
+          {Array.from(pausedPlayers.values()).map((player: TPlayer) => {
             return (
-              <ListGroupItem key={player.id} className={styles.playerQueueItem}>
-                <p className={`${styles.playerQueueItemName} ${isPlayerPaused(player.id) ? styles.playerQueueItemNamePaused : ''}`}>{player.name}</p>
-                <div>
-                  <OverlayTrigger overlay={<Tooltip id='stop-tooltip'>Stop Playing</Tooltip>}>
-                    <Button 
-                      className={styles.playerQueueItemButton} 
-                      variant='primary' 
-                      size='sm' 
-                      onClick={() => {console.log(player); setIsStopPlayerModalOpen(player)}}
-                      disabled={isPlayerPaused(player.id)}
-                    >
-                      <i className="bi bi-slash-square"/>
-                    </Button>
-                  </OverlayTrigger>
-                  <OverlayTrigger overlay={<Tooltip id='pause-tooltip'>{isPlayerPaused(player.id) ? 'Resume' : 'Pause Playing'}</Tooltip>}>
-                    <Button 
-                      className={styles.playerQueueItemButton} 
-                      variant='secondary' 
-                      size='sm' 
-                      onClick={() => togglePausePlayer(player)}
-                    >
-                      {isPlayerPaused(player.id) ? <i className="bi bi-play"/> : <i className="bi bi-pause"/>}
-                    </Button>
-                  </OverlayTrigger>
-                </div>
-              </ListGroupItem>
+              <PlayerListItem key={player.id} player={player} />
             )
           })}
         </ListGroup>
       }
 		</div>
   )
-}
+};
 
-export default PlayerList
+export default PlayerList;
