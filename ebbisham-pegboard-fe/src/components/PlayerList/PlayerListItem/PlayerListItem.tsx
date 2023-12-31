@@ -20,7 +20,12 @@ const PlayerListItem: React.FC<Props> = ({player}) => {
   
   return (
     <ListGroupItem className={styles.playerQueueItem}>
-        <p className={`${styles.playerQueueItemName} ${isPlayerPaused(player.id) ? styles.playerQueueItemNamePaused : ''}`}>{player.name}</p>
+        <p className={`${styles.playerQueueItemName} ${isPlayerPaused(player.id) ? styles.playerQueueItemNamePaused : ''}`}>
+            {player.gender==='M' && <i className="bi bi-circle mx-2"/>}
+            {player.gender==='F' && <i className="bi bi-circle-fill mx-2"/>}
+            {player.name}
+        </p>
+        
         <div>
             <OverlayTrigger overlay={<Tooltip id='stop-tooltip'>Stop Playing</Tooltip>}>
             <Button 

@@ -2,7 +2,7 @@ export type TPlayer = {
     id: string;
     name: string;
     gender: string;
-    playStatus: TPlayStatus;
+    playStatus: string;
 };
 
-export type TPlayStatus = 'playing' | 'paused' | 'stopped';
+// export type TPlayStatus = 'playing' | 'paused' | 'stopped';

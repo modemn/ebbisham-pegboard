@@ -1,8 +1,8 @@
 import { doc, updateDoc, setDoc, collection } from 'firebase/firestore';
-import { TPlayStatus, TPlayer } from './types';
+import { TPlayer } from './types';
 import { db } from '@ebb-firebase/clientApp';
 
-export const updatePlayerPlayStatus = async (playerId: string, newPlayStatus: TPlayStatus) => {
+export const updatePlayerPlayStatus = async (playerId: string, newPlayStatus: string) => {
     const playerRef = doc(db, 'users', playerId);
     await updateDoc(playerRef, {
         playStatus: newPlayStatus,

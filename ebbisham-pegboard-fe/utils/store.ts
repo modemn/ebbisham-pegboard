@@ -20,8 +20,8 @@ type Action = {
     setPlayers: (players: TPlayer[]) => void;
     addNewPlayerToStore: (player: TPlayer) => void;
     setPlayersInQueue: (players: TPlayer[]) => void;
-    setPausedPlayers: (players: TPlayer[]) => void;
     addPlayerToQueue: (player: TPlayer) => void;
+    setPausedPlayers: (players: TPlayer[]) => void;
     removePlayerFromQueue: (player: TPlayer) => void;
     togglePausePlayer: (player: TPlayer) => void;
 
@@ -44,6 +44,9 @@ export const useGlobalStore = create<State & Action>()(
         playersInQueue: new Map(),
         setPlayersInQueue: (players) =>
             set((state) => {
+                players.sort((a, b) => {
+                    return Number(a.playStatus) - Number(b.playStatus);
+                });
                 state.playersInQueue = new Map(players.map((p) => [p.id, p]));
             }),
 
@@ -58,7 +61,7 @@ export const useGlobalStore = create<State & Action>()(
                 state.playersInQueue.set(player.id, player);
                 state.players.delete(player.id);
             });
-            updatePlayerPlayStatus(player.id, 'playing');
+            updatePlayerPlayStatus(player.id, Date.now().toString());
         },
 
         removePlayerFromQueue: (player) => {
@@ -66,7 +69,7 @@ export const useGlobalStore = create<State & Action>()(
                 state.playersInQueue.delete(player.id);
                 state.players.set(player.id, player);
             });
-            updatePlayerPlayStatus(player.id, 'stopped');
+            updatePlayerPlayStatus(player.id, '-1');
         },
 
         togglePausePlayer: (player) => {
@@ -74,18 +77,16 @@ export const useGlobalStore = create<State & Action>()(
             if (get().pausedPlayers.get(player.id)) {
                 set((state) => {
                     state.pausedPlayers.delete(player.id);
-                    const unpausedPlayer = state.players.get(player.id);
-                    if (unpausedPlayer) {
-                        state.players.set(player.id, { ...unpausedPlayer, playStatus: 'playing' });
-                    }
+                    state.playersInQueue.set(player.id, player);
                 });
-                updatePlayerPlayStatus(player.id, 'playing');
+                updatePlayerPlayStatus(player.id, Date.now().toString());
             } else {
                 // Pause player
                 set((state) => {
                     state.pausedPlayers.set(player.id, player);
+                    state.playersInQueue.delete(player.id);
                 });
-                updatePlayerPlayStatus(player.id, 'paused');
+                updatePlayerPlayStatus(player.id, '0');
             }
         },
 

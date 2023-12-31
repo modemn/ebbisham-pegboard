@@ -33,15 +33,15 @@ const PlayerList: React.FC = () => {
     if (!usersLoading && !usersError && users) {
       const allPlayersFromDB = users.docs.map((doc) => ({ id: doc.id, ...doc.data() } as TPlayer))
       const stoppedPlayersFromDB = allPlayersFromDB.filter((player) => {
-        return player.playStatus === 'stopped';
+        return player.playStatus === '-1';
       });
       setPlayers(stoppedPlayersFromDB)
       const playersInQueueFromDB = allPlayersFromDB.filter((player) => {
-        return player.playStatus === 'playing';
+        return Number(player.playStatus) > 0;
       });
       setPlayersInQueue(playersInQueueFromDB)
       const pausedPlayerFromDB = allPlayersFromDB.filter((player) => {
-        return player.playStatus === 'paused';
+        return player.playStatus === '0';
       });
       setPausedPlayers(pausedPlayerFromDB)
     }
@@ -49,6 +49,7 @@ const PlayerList: React.FC = () => {
 
   return (
     <div>
+      <h3 className='mx-2 mb-3'>Players Queue</h3>
 			{usersError && <strong>Error: {JSON.stringify(usersError)}</strong>}
 			{usersLoading && 
 				<Spinner animation="border" role="status">
@@ -73,9 +74,11 @@ const PlayerList: React.FC = () => {
           busy={usersLoading}
         />  
 			}
-      <Button onClick={() => setIsAddNewPlayerModalOpen(true)}>
-        <i className="bi bi-person-fill-add" />
-      </Button>
+      <OverlayTrigger overlay={<Tooltip id='pause-tooltip'>Add New Player</Tooltip>}>
+        <Button onClick={() => setIsAddNewPlayerModalOpen(true)}>
+          <i className="bi bi-person-fill-add" />
+        </Button>
+      </OverlayTrigger>
       </div>
       
       {Array.from(playersInQueue.values()).length === 0 && Array.from(pausedPlayers.values()).length === 0 && <p className={styles.noPlayers}>No players in queue.</p>}
