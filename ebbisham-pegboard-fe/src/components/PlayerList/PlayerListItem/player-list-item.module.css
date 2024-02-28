@@ -14,3 +14,10 @@
 .playerQueueItemButton {
     margin-left: 1rem;
 }
+
+.playerQueueItemChair {
+    border-color: #FFBC42;
+    border-style: solid;
+    border-width: 2px;
+    border-radius: 5px;
+}

@@ -4,7 +4,7 @@
 
 .inputRow{
     display: flex;
-    justify-content: space-evenly;
+    justify-content: space-between;
 }
 
 .noPlayers {
@@ -15,4 +15,12 @@
 .playersTitle {
     margin-top: 2rem;
     margin-left: 0.5rem;
+}
+
+.combobox {
+    width: 80%;
+}
+
+.addPlayerButton {
+    width: 15%;
 }

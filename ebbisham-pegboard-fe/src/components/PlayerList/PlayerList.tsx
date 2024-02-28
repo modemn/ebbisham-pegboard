@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { collection } from 'firebase/firestore';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import Spinner from 'react-bootstrap/Spinner';
 import { db } from '@ebb-firebase/clientApp';
-import { Button, ListGroup, ListGroupItem, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Button, ListGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import "react-widgets/styles.css";
 import Combobox from "react-widgets/Combobox";
 
@@ -51,15 +50,8 @@ const PlayerList: React.FC = () => {
     <div>
       <h3 className='mx-2 mb-3'>Players Queue</h3>
 			{usersError && <strong>Error: {JSON.stringify(usersError)}</strong>}
-			{usersLoading && 
-				<Spinner animation="border" role="status">
-					<span className="visually-hidden">Loading...</span>
-				</Spinner>
-			}
       <div className={styles.inputRow}>
-			{users &&
         <Combobox
-          hideEmptyPopup
           data={Array.from(players.values())}
           dataKey='id'
           textField='name'
@@ -72,10 +64,10 @@ const PlayerList: React.FC = () => {
           value={comboBoxInput}
           onBlur={() => {setComboBoxInput('')}}
           busy={usersLoading}
-        />  
-			}
+          className={styles.combobox}
+        />
       <OverlayTrigger overlay={<Tooltip id='pause-tooltip'>Add New Player</Tooltip>}>
-        <Button onClick={() => setIsAddNewPlayerModalOpen(true)}>
+        <Button className={styles.addPlayerButton} onClick={() => setIsAddNewPlayerModalOpen(true)}>
           <i className="bi bi-person-fill-add" />
         </Button>
       </OverlayTrigger>
@@ -86,9 +78,9 @@ const PlayerList: React.FC = () => {
         <>
           <h4 className={styles.playersTitle}>Playing</h4>
           <ListGroup className={styles.playerQueue}>
-            {Array.from(playersInQueue.values()).map((player: TPlayer) => {
+            {Array.from(playersInQueue.values()).map((player: TPlayer, index: number) => {
               return (
-                <PlayerListItem key={player.id} player={player} />
+                <PlayerListItem key={player.id} player={player} isChair={index === 0}/>
               )
             })}
           </ListGroup>

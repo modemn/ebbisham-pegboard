@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import { TPlayer } from './types';
+import { TPlayer, TToastVariant } from './types';
 import { updatePlayerPlayStatus } from './firestore_utils';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { enableMapSet } from 'immer';
@@ -14,6 +14,17 @@ type State = {
 
     isStopPlayerModalOpen: TPlayer | null;
     isAddNewPlayerModalOpen: boolean;
+
+    toastNotification: {
+        isOpen: boolean;
+        title: string;
+        message: string;
+        variant: TToastVariant | undefined;
+    };
+
+    gamePreferences: {
+        inViewNumber: number;
+    };
 };
 
 type Action = {
@@ -27,6 +38,10 @@ type Action = {
 
     setIsStopPlayerModalOpen: (player: TPlayer | null) => void;
     setIsAddNewPlayerModalOpen: (isOpen: boolean) => void;
+
+    setToastNotification: (isOpen: boolean, message?: string, title?: string, variant?: TToastVariant) => void;
+
+    setInViewNumber: (inViewNumber: number) => void;
 };
 
 export const useGlobalStore = create<State & Action>()(
@@ -100,6 +115,34 @@ export const useGlobalStore = create<State & Action>()(
         setIsAddNewPlayerModalOpen: (isOpen) =>
             set((state) => {
                 state.isAddNewPlayerModalOpen = isOpen;
+            }),
+
+        toastNotification: {
+            isOpen: false,
+            title: '',
+            message: '',
+            variant: undefined,
+        },
+        setToastNotification: (isOpen, message, title, variant) =>
+            set((state) => {
+                state.toastNotification.isOpen = isOpen;
+                if (message) {
+                    state.toastNotification.message = message;
+                }
+                if (title) {
+                    state.toastNotification.title = title;
+                }
+                if (variant) {
+                    state.toastNotification.variant = variant;
+                }
+            }),
+
+        gamePreferences: {
+            inViewNumber: 8,
+        },
+        setInViewNumber: (inViewNumber) =>
+            set((state) => {
+                state.gamePreferences.inViewNumber = inViewNumber;
             }),
     }))
 );

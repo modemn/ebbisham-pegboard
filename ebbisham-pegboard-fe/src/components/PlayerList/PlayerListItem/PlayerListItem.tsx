@@ -7,9 +7,10 @@ import { useGlobalStore } from '@utils/store'
 
 type Props = {
     player: TPlayer
+    isChair?: boolean
 }
 
-const PlayerListItem: React.FC<Props> = ({player}) => {
+const PlayerListItem: React.FC<Props> = ({player, isChair}) => {
   const [pausedPlayers] = useGlobalStore((state) => [state.pausedPlayers]);
   const [setIsStopPlayerModalOpen] = useGlobalStore((state) => [state.setIsStopPlayerModalOpen]);
   const [togglePausePlayer] = useGlobalStore((state) => [state.togglePausePlayer]);
@@ -19,7 +20,7 @@ const PlayerListItem: React.FC<Props> = ({player}) => {
   };
   
   return (
-    <ListGroupItem className={styles.playerQueueItem}>
+    <ListGroupItem className={`${styles.playerQueueItem} ${isChair ? styles.playerQueueItemChair : ''}`}>
         <p className={`${styles.playerQueueItemName} ${isPlayerPaused(player.id) ? styles.playerQueueItemNamePaused : ''}`}>
             {player.gender==='M' && <i className="bi bi-circle mx-2"/>}
             {player.gender==='F' && <i className="bi bi-circle-fill mx-2"/>}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useGlobalStore } from '@utils/store';
-import { Button, Col, Form, FormControl, FormGroup, FormLabel, FormSelect, InputGroup, Modal, ModalBody, ModalFooter, ModalHeader, ModalTitle, Row } from 'react-bootstrap';
+import { Button, Form, FormControl, FormGroup, FormLabel, Modal, ModalBody, ModalFooter, ModalHeader, ModalTitle } from 'react-bootstrap';
 import { createPortal } from 'react-dom';
 import * as formik from 'formik';
 import * as yup from 'yup';
@@ -66,9 +66,9 @@ const AddNewPlayerModal: React.FC = () => {
           >
             {({ handleSubmit, handleChange, values, touched, errors }) => (
               <Form noValidate onSubmit={handleSubmit} id='addNewPlayerForm'>
-                <Form.Group className='mb-3' controlId="validationFormik01">
-                  <Form.Label>First name</Form.Label>
-                  <Form.Control
+                <FormGroup className='mb-3' controlId="validationFormik01">
+                  <FormLabel>First name</FormLabel>
+                  <FormControl
                     type="text"
                     name="firstName"
                     value={values.firstName}
@@ -76,13 +76,13 @@ const AddNewPlayerModal: React.FC = () => {
                     isValid={touched.firstName && !errors.firstName}
                     isInvalid={touched.firstName && !!errors.lastName}
                   />
-                  <Form.Control.Feedback type="invalid">
+                  <FormControl.Feedback type="invalid">
                     {errors.firstName}
-                  </Form.Control.Feedback>
-                </Form.Group>
-                <Form.Group className='mb-3' controlId="validationFormik02">
-                  <Form.Label>Last name</Form.Label>
-                  <Form.Control
+                  </FormControl.Feedback>
+                </FormGroup>
+                <FormGroup className='mb-3' controlId="validationFormik02">
+                  <FormLabel>Last name</FormLabel>
+                  <FormControl
                     type="text"
                     name="lastName"
                     value={values.lastName}
@@ -93,10 +93,10 @@ const AddNewPlayerModal: React.FC = () => {
                   <FormControl.Feedback type="invalid">
                     {errors.lastName}
                   </FormControl.Feedback>
-                </Form.Group>
-                <Form.Group className='mb-3' controlId="validationFormik03">
-                  <Form.Label>Playing Gender</Form.Label>
-                  <Form.Control
+                </FormGroup>
+                <FormGroup className='mb-3' controlId="validationFormik03">
+                  <FormLabel>Playing Gender</FormLabel>
+                  <FormControl
                     as='select'
                     name="gender"
                     value={values.gender}
@@ -107,11 +107,11 @@ const AddNewPlayerModal: React.FC = () => {
                     <option value=''>Select Gender</option>
                     <option value='M'>Male</option>
                     <option value='F'>Female</option>
-                  </Form.Control>
-                  <Form.Control.Feedback type="invalid">
+                  </FormControl>
+                  <FormControl.Feedback type="invalid">
                     {errors.gender}
-                  </Form.Control.Feedback>
-                </Form.Group>
+                  </FormControl.Feedback>
+                </FormGroup>
               </Form>
             )}
           </Formik>
