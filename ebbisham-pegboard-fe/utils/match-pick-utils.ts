@@ -1,4 +1,5 @@
 import { useGlobalStore } from './store';
+import { TPlayer } from './types';
 
 const pickRandomWeightedChoice = (items: Array<any>, weights: Array<number>) => {
     let i;
@@ -16,11 +17,12 @@ export const canPick: () => { pickable: boolean; reason: string } = () => {
     }
 };
 
-export const pickNextGame = () => {
+export const pickNextGame = (): TPlayer[] => {
     const inViewNumber = useGlobalStore.getState().gamePreferences.inViewNumber;
+    const mixedPreference = useGlobalStore.getState().gamePreferences.mixedPreference;
     const playersInQueue = useGlobalStore.getState().playersInQueue;
     if (playersInQueue.size == 4) {
-        return playersInQueue;
+        return Array.from(playersInQueue.values());
     }
     // Get the players in view
     const playersInView = Array.from(playersInQueue.values()).slice(0, Math.min(inViewNumber, playersInQueue.size));
@@ -60,7 +62,7 @@ export const pickNextGame = () => {
     }
 
     // Calculate Level Doubles weighting
-    const LevelDoublesWeight = +levelDoublesPossible * (matchingGenderWeighting / (matchingGenderWeighting + notMatchingGenderWeighting));
+    const LevelDoublesWeight = +levelDoublesPossible * (matchingGenderWeighting / (matchingGenderWeighting + notMatchingGenderWeighting)) * (1 - mixedPreference);
     // Calculate Mixed Doubles weighting
     const MixedDoublesWeight = +mixedDoublesPossible * (1 - LevelDoublesWeight);
     // Calculate Funny Doubles weighting
@@ -69,13 +71,14 @@ export const pickNextGame = () => {
     // Pick game type randomly with weighting
     const gameType = pickRandomWeightedChoice(['Level', 'Mixed', 'Funny'], [LevelDoublesWeight, MixedDoublesWeight, funnyDoublesWeight]);
 
-    // Extract the players, shuffle and place as playing
+    // Extract the players
     let players = [chairPlayer];
     if (gameType === 'Level') {
         players.push(...playersInViewMatchingChairGender.slice(0, 3));
     } else if (gameType === 'Mixed') {
+        players.push(...playersInViewNotMatchingChairGender.slice(0, 1));
         players.push(...playersInViewMatchingChairGender.slice(0, 1));
-        players.push(...playersInViewNotMatchingChairGender.slice(0, 2));
+        players.push(...playersInViewNotMatchingChairGender.slice(1, 2));
     } else if (gameType === 'Funny') {
         players.push(...playersInViewNotMatchingChairGender.slice(0, 3));
     }

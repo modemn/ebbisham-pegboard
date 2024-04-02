@@ -11,6 +11,7 @@ type State = {
     players: Map<string, TPlayer>;
     playersInQueue: Map<string, TPlayer>;
     pausedPlayers: Map<string, TPlayer>;
+    nextOnPlayers: Map<string, TPlayer>;
 
     isStopPlayerModalOpen: TPlayer | null;
     isAddNewPlayerModalOpen: boolean;
@@ -24,6 +25,7 @@ type State = {
 
     gamePreferences: {
         inViewNumber: number;
+        mixedPreference: number; // 0 = no priority, 0.99 = always mixed if possible
     };
 };
 
@@ -35,6 +37,7 @@ type Action = {
     setPausedPlayers: (players: TPlayer[]) => void;
     removePlayerFromQueue: (player: TPlayer) => void;
     togglePausePlayer: (player: TPlayer) => void;
+    setNextOnPlayers: (players: TPlayer[]) => void;
 
     setIsStopPlayerModalOpen: (player: TPlayer | null) => void;
     setIsAddNewPlayerModalOpen: (isOpen: boolean) => void;
@@ -42,6 +45,7 @@ type Action = {
     setToastNotification: (isOpen: boolean, message?: string, title?: string, variant?: TToastVariant) => void;
 
     setInViewNumber: (inViewNumber: number) => void;
+    setMixedPreference: (mixedPreference: number) => void;
 };
 
 export const useGlobalStore = create<State & Action>()(
@@ -70,6 +74,14 @@ export const useGlobalStore = create<State & Action>()(
             set((state) => {
                 state.pausedPlayers = new Map(players.map((p) => [p.id, p]));
             }),
+
+        nextOnPlayers: new Map(),
+        setNextOnPlayers: (players) =>
+            set((state) => {
+                state.nextOnPlayers = new Map(players.map((p) => [p.id, p]));
+            }),
+
+        // TODO: add a function to transition a player from the queue to next on
 
         addPlayerToQueue: (player) => {
             set((state) => {
@@ -108,7 +120,7 @@ export const useGlobalStore = create<State & Action>()(
         isStopPlayerModalOpen: null,
         setIsStopPlayerModalOpen: (player) =>
             set((state) => {
-                state.isStopPlayerModalOpen = player;
+                state.isStopPlayerModalOpen = player as TPlayer;
             }),
 
         isAddNewPlayerModalOpen: false,
@@ -139,10 +151,15 @@ export const useGlobalStore = create<State & Action>()(
 
         gamePreferences: {
             inViewNumber: 8,
+            mixedPreference: 0.5,
         },
         setInViewNumber: (inViewNumber) =>
             set((state) => {
                 state.gamePreferences.inViewNumber = inViewNumber;
+            }),
+        setMixedPreference: (mixedPreference) =>
+            set((state) => {
+                state.gamePreferences.mixedPreference = mixedPreference;
             }),
     }))
 );
