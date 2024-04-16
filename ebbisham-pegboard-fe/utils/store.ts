@@ -8,10 +8,12 @@ import { enableMapSet } from 'immer';
 enableMapSet();
 
 type State = {
+    sessionId: string;
+
     players: Map<string, TPlayer>;
     playersInQueue: Map<string, TPlayer>;
     pausedPlayers: Map<string, TPlayer>;
-    nextOnPlayers: Map<string, TPlayer>;
+    nextOnPlayers: Map<number, TPlayer>;
 
     isStopPlayerModalOpen: TPlayer | null;
     isAddNewPlayerModalOpen: boolean;
@@ -30,6 +32,8 @@ type State = {
 };
 
 type Action = {
+    setSessionId: (sessionId: string) => void;
+
     setPlayers: (players: TPlayer[]) => void;
     addNewPlayerToStore: (player: TPlayer) => void;
     setPlayersInQueue: (players: TPlayer[]) => void;
@@ -37,7 +41,7 @@ type Action = {
     setPausedPlayers: (players: TPlayer[]) => void;
     removePlayerFromQueue: (player: TPlayer) => void;
     togglePausePlayer: (player: TPlayer) => void;
-    setNextOnPlayers: (players: TPlayer[]) => void;
+    setNextOnPlayers: (players: Map<number, TPlayer>) => void;
 
     setIsStopPlayerModalOpen: (player: TPlayer | null) => void;
     setIsAddNewPlayerModalOpen: (isOpen: boolean) => void;
@@ -50,6 +54,12 @@ type Action = {
 
 export const useGlobalStore = create<State & Action>()(
     immer((set, get) => ({
+        sessionId: '-1',
+        setSessionId: (sessionId) =>
+            set((state) => {
+                state.sessionId = sessionId;
+            }),
+
         players: new Map(),
         setPlayers: (players) =>
             set((state) => {
@@ -78,7 +88,7 @@ export const useGlobalStore = create<State & Action>()(
         nextOnPlayers: new Map(),
         setNextOnPlayers: (players) =>
             set((state) => {
-                state.nextOnPlayers = new Map(players.map((p) => [p.id, p]));
+                state.nextOnPlayers = players;
             }),
 
         // TODO: add a function to transition a player from the queue to next on

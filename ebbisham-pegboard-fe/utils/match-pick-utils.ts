@@ -17,12 +17,16 @@ export const canPick: () => { pickable: boolean; reason: string } = () => {
     }
 };
 
-export const pickNextGame = (): TPlayer[] => {
+export const pickNextGame = (): Map<number, TPlayer> => {
     const inViewNumber = useGlobalStore.getState().gamePreferences.inViewNumber;
     const mixedPreference = useGlobalStore.getState().gamePreferences.mixedPreference;
     const playersInQueue = useGlobalStore.getState().playersInQueue;
     if (playersInQueue.size == 4) {
-        return Array.from(playersInQueue.values());
+        return new Map<number, TPlayer>(
+            Array.from(playersInQueue.values()).map((pl, i) => {
+                return [i, pl];
+            })
+        );
     }
     // Get the players in view
     const playersInView = Array.from(playersInQueue.values()).slice(0, Math.min(inViewNumber, playersInQueue.size));
@@ -72,15 +76,20 @@ export const pickNextGame = (): TPlayer[] => {
     const gameType = pickRandomWeightedChoice(['Level', 'Mixed', 'Funny'], [LevelDoublesWeight, MixedDoublesWeight, funnyDoublesWeight]);
 
     // Extract the players
-    let players = [chairPlayer];
+    // let players = [chairPlayer];
+    const players = new Map<number, TPlayer>([[0, chairPlayer]]);
     if (gameType === 'Level') {
-        players.push(...playersInViewMatchingChairGender.slice(0, 3));
+        [...playersInViewMatchingChairGender.slice(0, 3)].forEach((pl, i) => {
+            players.set(i + 1, pl);
+        });
     } else if (gameType === 'Mixed') {
-        players.push(...playersInViewNotMatchingChairGender.slice(0, 1));
-        players.push(...playersInViewMatchingChairGender.slice(0, 1));
-        players.push(...playersInViewNotMatchingChairGender.slice(1, 2));
+        players.set(1, [...playersInViewNotMatchingChairGender.slice(0, 1)][0]);
+        players.set(2, [...playersInViewMatchingChairGender.slice(0, 1)][0]);
+        players.set(3, [...playersInViewNotMatchingChairGender.slice(1, 2)][0]);
     } else if (gameType === 'Funny') {
-        players.push(...playersInViewNotMatchingChairGender.slice(0, 3));
+        [...playersInViewNotMatchingChairGender.slice(0, 3)].forEach((pl, i) => {
+            players.set(i + 1, pl);
+        });
     }
 
     return players;
