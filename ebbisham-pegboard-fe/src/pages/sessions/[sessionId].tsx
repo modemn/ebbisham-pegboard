@@ -8,8 +8,8 @@ import CourtList from '@/components/CourtList/CourtList';
 import NextOn from '@/components/NextOn/NextOn';
 import { useGlobalStore } from '@utils/store';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { collection, getDocs, query } from 'firebase/firestore';
-import { TPlayer } from '@utils/types';
+import { doc, collection, getDoc } from 'firebase/firestore';
+import { EPlayStatus, TPlayer } from '@utils/types';
 import { useEffect } from 'react';
 import { db } from '@ebb-firebase/clientApp';
 import AddNewPlayerModal from '@/components/AddNewPlayerModal/AddNewPlayerModal';
@@ -17,9 +17,10 @@ import StopPlayerModal from '@/components/StopPlayerModal/StopPlayerModal';
 import { InferGetServerSidePropsType } from 'next';
 
 export const getServerSideProps = async (context: any) => {
-    const sessionsRef = query(collection(db, 'sessions', context.query.sessionId, 'players'));
-    const sessionSnapshot = await getDocs(sessionsRef);
-    if (!sessionSnapshot || sessionSnapshot.docs.length === 0) {
+    const sessionsRef = doc(db, 'sessions', context.query.sessionId);
+    const sessionSnapshot = await getDoc(sessionsRef);
+    console.log(sessionSnapshot);
+    if (!sessionSnapshot) {
         return { notFound: true };
     } else {
         return { props: { sessionId: context.query.sessionId } };
@@ -39,25 +40,22 @@ export default function Page({ sessionId }: InferGetServerSidePropsType<typeof g
         setSessionId(sessionId);
     }, [sessionId, setSessionId]);
 
-    const [players, playersLoading, playersError] = useCollection(collection(db, 'sessions', sessionId, 'players'), {});
+    const [players, playersLoading, playersError] = useCollection(collection(db, 'players'), {});
 
     useEffect(() => {
         if (!playersLoading && !playersError && players) {
             const allPlayersFromDB = players.docs.map((doc) => ({ id: doc.id, ...doc.data() } as TPlayer));
-            const stoppedPlayersFromDB = allPlayersFromDB.filter((player) => {
-                return player.playStatus === '-1';
-            });
-            setPlayers(stoppedPlayersFromDB);
+            setPlayers(allPlayersFromDB);
             const playersInQueueFromDB = allPlayersFromDB.filter((player) => {
-                return Number(player.playStatus) > 0;
+                return Number(player.playStatus) > Number(EPlayStatus.PLAYING);
             });
             setPlayersInQueue(playersInQueueFromDB);
             const pausedPlayerFromDB = allPlayersFromDB.filter((player) => {
-                return player.playStatus === '0';
+                return player.playStatus === EPlayStatus.PAUSED;
             });
             setPausedPlayers(pausedPlayerFromDB);
         }
-    }, [playersLoading, playersError, players, setPlayers, setPlayersInQueue, setPausedPlayers]);
+    }, [playersLoading, playersError, setPlayers, setPlayersInQueue, setPausedPlayers, players]);
 
     return (
         <>

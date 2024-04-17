@@ -4,7 +4,7 @@ import 'react-widgets/styles.css';
 import Combobox from 'react-widgets/Combobox';
 
 import styles from './player-list.module.css';
-import { TPlayer } from '@utils/types';
+import { EPlayStatus, TPlayer } from '@utils/types';
 import { useGlobalStore } from '@utils/store';
 import PlayerListItem from './PlayerListItem/PlayerListItem';
 import { FirestoreError } from 'firebase/firestore';
@@ -30,7 +30,9 @@ const PlayerList = ({ playersError, playersLoading }: Props) => {
             {playersError && <strong>Error: {JSON.stringify(playersError)}</strong>}
             <div className={styles.inputRow}>
                 <Combobox
-                    data={Array.from(players.values())}
+                    data={Array.from(players.values()).filter((player) => {
+                        return Number(player.playStatus) === Number(EPlayStatus.NOT_PLAYING);
+                    })}
                     dataKey='id'
                     textField='name'
                     renderListItem={({ item }) => <span>{item.name}</span>}

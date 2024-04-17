@@ -1,9 +1,12 @@
 import { canPick, pickNextGame } from '@utils/match-pick-utils';
 import { useGlobalStore } from '@utils/store';
 import { TPlayer } from '@utils/types';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button, Card, CardBody, ListGroup, ListGroupItem, Spinner, Placeholder } from 'react-bootstrap';
 import styles from './next-on.module.css';
+import { collection } from 'firebase/firestore';
+import { db } from '@ebb-firebase/clientApp';
+import { useCollection } from 'react-firebase-hooks/firestore';
 
 const NextOn: React.FC = () => {
     const [setToastNotification] = useGlobalStore((state) => [state.setToastNotification]);
@@ -11,18 +14,31 @@ const NextOn: React.FC = () => {
     // TODO: get the state from the db and render appropriately
     const [nextOnPlayers] = useGlobalStore((state) => [state.nextOnPlayers]);
     const [setNextOnPlayers] = useGlobalStore((state) => [state.setNextOnPlayers]);
+    const [sessionId] = useGlobalStore((state) => [state.sessionId]);
+    const [players] = useGlobalStore((state) => [state.players]);
+
+    const [nextOn, nextOnLoading, nextOnError] = useCollection(collection(db, 'sessions', sessionId, 'nexton'), {});
+
+    useEffect(() => {
+        if (!nextOnLoading && !nextOnError && nextOn) {
+            const nextOnPlayerMap = new Map<number, TPlayer>();
+            nextOn.docs.forEach((doc) => {
+                const player = players.get(doc.data().playerId);
+                if (player) {
+                    nextOnPlayerMap.set(Number(doc.id), player);
+                }
+            });
+            setNextOnPlayers(nextOnPlayerMap);
+        }
+    }, [nextOn, nextOnError, nextOnLoading, players, setNextOnPlayers]);
 
     const handlePickNext = () => {
         const { pickable, reason } = canPick();
         if (pickable) {
             setLoading(true);
             const players = pickNextGame();
-            console.log(players);
             setNextOnPlayers(players);
-            // TODO: persist this in the db
-            setTimeout(() => {
-                setLoading(false);
-            }, 1000);
+            setLoading(false);
         } else {
             setToastNotification(true, reason, 'Error', 'danger');
         }

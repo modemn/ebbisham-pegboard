@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import * as formik from 'formik';
 import * as yup from 'yup';
 import { addNewPlayer } from '@utils/firestore_utils';
-import { TPlayer } from '@utils/types';
+import { EPlayStatus, TPlayer } from '@utils/types';
 
 const AddNewPlayerModal: React.FC = () => {
     const [isAddNewPlayerModalOpen] = useGlobalStore((state) => [state.isAddNewPlayerModalOpen]);
@@ -33,7 +33,7 @@ const AddNewPlayerModal: React.FC = () => {
             id: 'tempid',
             name: values.firstName + ' ' + values.lastName,
             gender: values.gender,
-            playStatus: '-1',
+            playStatus: EPlayStatus.NOT_PLAYING,
         };
         const id = await addNewPlayer(newPlayerToAdd);
         addNewPlayerToStore({ ...newPlayerToAdd, id: id });

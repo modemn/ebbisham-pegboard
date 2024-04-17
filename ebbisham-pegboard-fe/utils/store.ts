@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import { TPlayer, TToastVariant } from './types';
+import { EPlayStatus, TPlayer, TToastVariant } from './types';
 import { updatePlayerPlayStatus } from './firestore_utils';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { enableMapSet } from 'immer';
@@ -42,6 +42,7 @@ type Action = {
     removePlayerFromQueue: (player: TPlayer) => void;
     togglePausePlayer: (player: TPlayer) => void;
     setNextOnPlayers: (players: Map<number, TPlayer>) => void;
+    addPlayersToNextOn: (players: Map<number, TPlayer>) => void;
 
     setIsStopPlayerModalOpen: (player: TPlayer | null) => void;
     setIsAddNewPlayerModalOpen: (isOpen: boolean) => void;
@@ -86,12 +87,19 @@ export const useGlobalStore = create<State & Action>()(
             }),
 
         nextOnPlayers: new Map(),
-        setNextOnPlayers: (players) =>
+        setNextOnPlayers: (players) => {
             set((state) => {
                 state.nextOnPlayers = players;
-            }),
-
-        // TODO: add a function to transition a player from the queue to next on
+            });
+        },
+        addPlayersToNextOn: (players) => {
+            set((state) => {
+                state.nextOnPlayers = players;
+            });
+            players.forEach((player) => {
+                updatePlayerPlayStatus(player.id, EPlayStatus.NEXT);
+            });
+        },
 
         addPlayerToQueue: (player) => {
             set((state) => {
@@ -106,7 +114,7 @@ export const useGlobalStore = create<State & Action>()(
                 state.playersInQueue.delete(player.id);
                 state.players.set(player.id, player);
             });
-            updatePlayerPlayStatus(player.id, '-1');
+            updatePlayerPlayStatus(player.id, EPlayStatus.NOT_PLAYING);
         },
 
         togglePausePlayer: (player) => {
@@ -123,7 +131,7 @@ export const useGlobalStore = create<State & Action>()(
                     state.pausedPlayers.set(player.id, player);
                     state.playersInQueue.delete(player.id);
                 });
-                updatePlayerPlayStatus(player.id, '0');
+                updatePlayerPlayStatus(player.id, EPlayStatus.PAUSED);
             }
         },
 
