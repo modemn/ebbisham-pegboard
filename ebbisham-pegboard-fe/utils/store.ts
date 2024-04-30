@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { EPlayStatus, TPlayer, TToastVariant } from './types';
-import { updatePlayerPlayStatus } from './firestore_utils';
+import { addPlayersToNextOn, resetNextOnPlayers, updatePlayerPlayStatus } from './firestore_utils';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { enableMapSet } from 'immer';
 
@@ -43,6 +43,7 @@ type Action = {
     togglePausePlayer: (player: TPlayer) => void;
     setNextOnPlayers: (players: Map<number, TPlayer>) => void;
     addPlayersToNextOn: (players: Map<number, TPlayer>) => void;
+    returnNextOnPlayersToQueue: () => void;
 
     setIsStopPlayerModalOpen: (player: TPlayer | null) => void;
     setIsAddNewPlayerModalOpen: (isOpen: boolean) => void;
@@ -98,6 +99,17 @@ export const useGlobalStore = create<State & Action>()(
             });
             players.forEach((player) => {
                 updatePlayerPlayStatus(player.id, EPlayStatus.NEXT);
+            });
+            addPlayersToNextOn(players);
+        },
+        returnNextOnPlayersToQueue: () => {
+            set((state) => {
+                state.nextOnPlayers.forEach((player) => {
+                    updatePlayerPlayStatus(player.id, Date.now().toString());
+                    state.playersInQueue.set(player.id, player);
+                });
+                resetNextOnPlayers();
+                state.nextOnPlayers = new Map();
             });
         },
 

@@ -1,5 +1,3 @@
-import { useRouter } from 'next/router';
-import { notFound } from 'next/navigation';
 import { Col, Container, Row, Toast, ToastBody, ToastContainer, ToastHeader } from 'react-bootstrap';
 
 import styles from '@/styles/Home.module.css';
@@ -19,7 +17,6 @@ import { InferGetServerSidePropsType } from 'next';
 export const getServerSideProps = async (context: any) => {
     const sessionsRef = doc(db, 'sessions', context.query.sessionId);
     const sessionSnapshot = await getDoc(sessionsRef);
-    console.log(sessionSnapshot);
     if (!sessionSnapshot) {
         return { notFound: true };
     } else {
@@ -28,7 +25,6 @@ export const getServerSideProps = async (context: any) => {
 };
 
 export default function Page({ sessionId }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-    const router = useRouter();
     const [setSessionId] = useGlobalStore((state) => [state.setSessionId]);
     const [setPlayers] = useGlobalStore((state) => [state.setPlayers]);
     const [setPlayersInQueue] = useGlobalStore((state) => [state.setPlayersInQueue]);
