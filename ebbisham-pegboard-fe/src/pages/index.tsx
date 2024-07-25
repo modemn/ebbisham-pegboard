@@ -1,10 +1,7 @@
 import Head from 'next/head';
 import { Inter } from 'next/font/google';
-import { Toast, ToastBody, ToastContainer, ToastHeader } from 'react-bootstrap';
 
 const inter = Inter({ subsets: ['latin'] });
-
-import { useGlobalStore } from '@utils/store';
 
 export default function Home() {
     return (

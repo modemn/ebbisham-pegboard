@@ -23,7 +23,7 @@ export const getServerSideProps = async (context: any) => {
     }
 };
 
-export default function Page({ sessionId }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+export default function SessionPage({ sessionId }: InferGetServerSidePropsType<typeof getServerSideProps>) {
     const [setSessionId] = useGlobalStore((state) => [state.setSessionId]);
     const [toastNotification] = useGlobalStore((state) => [state.toastNotification]);
     const [setToastNotification] = useGlobalStore((state) => [state.setToastNotification]);

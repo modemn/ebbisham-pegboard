@@ -1,0 +1,22 @@
+.vs {
+    margin: 1.25rem 0;
+    text-align: center;
+    font-size: 100px;
+    margin-top: 4%;
+}
+
+.title {
+    margin-top: 4rem;
+    margin-bottom: 6rem;
+    text-align: center;
+    font-size: 100px;
+}
+
+.playerGroups {
+    text-align: center;
+    margin: 2rem;
+}
+
+.playerName {
+    font-size: 80px;
+}
