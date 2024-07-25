@@ -7,8 +7,6 @@ const inter = Inter({ subsets: ['latin'] });
 import { useGlobalStore } from '@utils/store';
 
 export default function Home() {
-    const [toastNotification] = useGlobalStore((state) => [state.toastNotification]);
-    const [setToastNotification] = useGlobalStore((state) => [state.setToastNotification]);
     return (
         <>
             <Head>

@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import { EPlayStatus, TPlayer, TToastVariant } from './types';
-import { addPlayersToNextOn, resetNextOnPlayers, updatePlayerPlayStatus } from './firestore_utils';
+import { EPlayStatus, TCourt, TPlayer, TToastVariant } from './types';
+import { addPlayersToNextOn, recordMatch, resetCourt, resetNextOnPlayers, startCourt, updatePlayerPlayStatus, updatePlayerStats } from './firestore_utils';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { enableMapSet } from 'immer';
+import { shuffle } from './utils';
 
 enableMapSet();
 
@@ -15,8 +16,11 @@ type State = {
     pausedPlayers: Map<string, TPlayer>;
     nextOnPlayers: Map<number, TPlayer>;
 
+    courts: TCourt[];
+
     isStopPlayerModalOpen: TPlayer | null;
     isAddNewPlayerModalOpen: boolean;
+    isEndMatchModalOpen: TCourt | null;
 
     toastNotification: {
         isOpen: boolean;
@@ -28,6 +32,7 @@ type State = {
     gamePreferences: {
         inViewNumber: number;
         mixedPreference: number; // 0 = no priority, 0.99 = always mixed if possible
+        maxCourts: number;
     };
 };
 
@@ -36,17 +41,25 @@ type Action = {
 
     setPlayers: (players: TPlayer[]) => void;
     addNewPlayerToStore: (player: TPlayer) => void;
+
     setPlayersInQueue: (players: TPlayer[]) => void;
     addPlayerToQueue: (player: TPlayer) => void;
-    setPausedPlayers: (players: TPlayer[]) => void;
     removePlayerFromQueue: (player: TPlayer) => void;
+
+    setPausedPlayers: (players: TPlayer[]) => void;
     togglePausePlayer: (player: TPlayer) => void;
+
     setNextOnPlayers: (players: Map<number, TPlayer>) => void;
     addPlayersToNextOn: (players: Map<number, TPlayer>) => void;
     returnNextOnPlayersToQueue: () => void;
 
+    setCourts: (courts: TCourt[]) => void;
+    movePlayersToCourt: (court: TCourt) => void;
+    endMatchOnCourt: (court: TCourt, homeScore: number, awayScore: number, matchEndTime: number) => void;
+
     setIsStopPlayerModalOpen: (player: TPlayer | null) => void;
     setIsAddNewPlayerModalOpen: (isOpen: boolean) => void;
+    setIsEndMatchModalOpen: (court: TCourt | null) => void;
 
     setToastNotification: (isOpen: boolean, message?: string, title?: string, variant?: TToastVariant) => void;
 
@@ -112,6 +125,37 @@ export const useGlobalStore = create<State & Action>()(
                 state.nextOnPlayers = new Map();
             });
         },
+        movePlayersToCourt: (court: TCourt) =>
+            set((state) => {
+                Object.values(court.players).forEach((playerId) => {
+                    updatePlayerPlayStatus(playerId, EPlayStatus.PLAYING);
+                });
+                startCourt(court);
+                resetNextOnPlayers();
+                state.nextOnPlayers = new Map();
+            }),
+        endMatchOnCourt: (court: TCourt, homeScore: number, awayScore: number, matchEndTime: number) =>
+            set((state) => {
+                let returnToQueueIndex = [0, 1, 2, 3];
+                returnToQueueIndex = shuffle(returnToQueueIndex);
+
+                returnToQueueIndex.forEach((i) => {
+                    const playerFromStore = state.players.get(court.players[i]) as TPlayer;
+                    state.players.set(court.players[i], { ...playerFromStore, win: playerFromStore.win + 1 });
+                    updatePlayerStats(court.players[i], playerFromStore.win + 1, playerFromStore.loss);
+                    state.addPlayerToQueue(playerFromStore);
+                });
+
+                state.courts = [];
+                recordMatch(court, homeScore, awayScore, matchEndTime);
+                resetCourt(court.id);
+            }),
+
+        courts: [] as TCourt[],
+        setCourts: (courts) =>
+            set((state) => {
+                state.courts = courts;
+            }),
 
         addPlayerToQueue: (player) => {
             set((state) => {
@@ -159,6 +203,12 @@ export const useGlobalStore = create<State & Action>()(
                 state.isAddNewPlayerModalOpen = isOpen;
             }),
 
+        isEndMatchModalOpen: null,
+        setIsEndMatchModalOpen: (court: TCourt | null) =>
+            set((state) => {
+                state.isEndMatchModalOpen = court;
+            }),
+
         toastNotification: {
             isOpen: false,
             title: '',
@@ -182,6 +232,7 @@ export const useGlobalStore = create<State & Action>()(
         gamePreferences: {
             inViewNumber: 8,
             mixedPreference: 0.5,
+            maxCourts: 3,
         },
         setInViewNumber: (inViewNumber) =>
             set((state) => {

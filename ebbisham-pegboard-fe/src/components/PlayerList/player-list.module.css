@@ -1,8 +1,8 @@
-.playerQueue{
-    margin-top: 2rem;
+.playerQueue {
+    margin-top: 1rem;
 }
 
-.inputRow{
+.inputRow {
     display: flex;
     justify-content: space-between;
 }
@@ -13,14 +13,10 @@
 }
 
 .playersTitle {
-    margin-top: 2rem;
+    margin-top: 1em;
     margin-left: 0.5rem;
 }
 
 .combobox {
-    width: 80%;
-}
-
-.addPlayerButton {
-    width: 15%;
+    width: 90%;
 }

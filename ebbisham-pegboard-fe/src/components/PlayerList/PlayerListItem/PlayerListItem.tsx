@@ -29,12 +29,12 @@ const PlayerListItem: React.FC<Props> = ({ player, isChair }) => {
 
             <div>
                 <OverlayTrigger overlay={<Tooltip id='stop-tooltip'>Stop Playing</Tooltip>}>
-                    <Button className={styles.playerQueueItemButton} variant='primary' size='sm' onClick={() => setIsStopPlayerModalOpen(player)} disabled={isPlayerPaused(player.id)}>
-                        <i className='bi bi-slash-square' />
+                    <Button className={styles.playerQueueItemButton} variant='outline-danger' size='sm' onClick={() => setIsStopPlayerModalOpen(player)} disabled={isPlayerPaused(player.id)}>
+                        <i className='bi bi-slash-lg' />
                     </Button>
                 </OverlayTrigger>
                 <OverlayTrigger overlay={<Tooltip id='pause-tooltip'>{isPlayerPaused(player.id) ? 'Resume' : 'Pause Playing'}</Tooltip>}>
-                    <Button className={styles.playerQueueItemButton} variant='secondary' size='sm' onClick={() => togglePausePlayer(player)}>
+                    <Button className={styles.playerQueueItemButton} variant='warning' size='sm' onClick={() => togglePausePlayer(player)}>
                         {isPlayerPaused(player.id) ? <i className='bi bi-play' /> : <i className='bi bi-pause' />}
                     </Button>
                 </OverlayTrigger>

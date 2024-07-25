@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, ListGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import 'react-widgets/styles.css';
 import Combobox from 'react-widgets/Combobox';
@@ -7,27 +7,50 @@ import styles from './player-list.module.css';
 import { EPlayStatus, TPlayer } from '@utils/types';
 import { useGlobalStore } from '@utils/store';
 import PlayerListItem from './PlayerListItem/PlayerListItem';
-import { FirestoreError } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
+import { useCollection } from 'react-firebase-hooks/firestore';
+import { db } from '@ebb-firebase/clientApp';
 
-type Props = {
-    playersError: FirestoreError | undefined;
-    playersLoading: boolean;
-};
-
-const PlayerList = ({ playersError, playersLoading }: Props) => {
+const PlayerList = () => {
     const [players] = useGlobalStore((state) => [state.players]);
     const [playersInQueue] = useGlobalStore((state) => [state.playersInQueue]);
     const [pausedPlayers] = useGlobalStore((state) => [state.pausedPlayers]);
-
+    const [setPlayers] = useGlobalStore((state) => [state.setPlayers]);
+    const [setPlayersInQueue] = useGlobalStore((state) => [state.setPlayersInQueue]);
+    const [setPausedPlayers] = useGlobalStore((state) => [state.setPausedPlayers]);
     const [addPlayerToQueue] = useGlobalStore((state) => [state.addPlayerToQueue]);
     const [setIsAddNewPlayerModalOpen] = useGlobalStore((state) => [state.setIsAddNewPlayerModalOpen]);
 
     const [comboBoxInput, setComboBoxInput] = useState('');
 
+    const [playersFromDB, playersFromDBLoading, playersFromDBError] = useCollection(collection(db, 'players'), {});
+
+    useEffect(() => {
+        if (!playersFromDBLoading && !playersFromDBError && playersFromDB) {
+            const allPlayersFromDB = playersFromDB.docs.map((doc) => ({ id: doc.id, ...doc.data() } as TPlayer));
+            setPlayers(allPlayersFromDB);
+            const playersInQueueFromDB = allPlayersFromDB.filter((player) => {
+                return Number(player.playStatus) > Number(EPlayStatus.PLAYING);
+            });
+            setPlayersInQueue(playersInQueueFromDB);
+            const pausedPlayerFromDB = allPlayersFromDB.filter((player) => {
+                return player.playStatus === EPlayStatus.PAUSED;
+            });
+            setPausedPlayers(pausedPlayerFromDB);
+        }
+    }, [playersFromDB, playersFromDBLoading, playersFromDBError, setPlayers, setPlayersInQueue, setPausedPlayers]);
+
+    if (playersFromDBLoading) {
+        return <p>Loading...</p>;
+    }
+
+    if (playersFromDBError) {
+        return <p>Error: {playersFromDBError.message}</p>;
+    }
+
     return (
         <div>
             <h3 className='mx-2 mb-3'>Players Queue</h3>
-            {playersError && <strong>Error: {JSON.stringify(playersError)}</strong>}
             <div className={styles.inputRow}>
                 <Combobox
                     data={Array.from(players.values()).filter((player) => {
@@ -45,11 +68,11 @@ const PlayerList = ({ playersError, playersLoading }: Props) => {
                     onBlur={() => {
                         setComboBoxInput('');
                     }}
-                    busy={playersLoading}
+                    busy={playersFromDBLoading}
                     className={styles.combobox}
                 />
-                <OverlayTrigger overlay={<Tooltip id='pause-tooltip'>Add New Player</Tooltip>}>
-                    <Button className={styles.addPlayerButton} onClick={() => setIsAddNewPlayerModalOpen(true)}>
+                <OverlayTrigger overlay={<Tooltip id='add-new-player-tooltip'>Add New Player</Tooltip>}>
+                    <Button onClick={() => setIsAddNewPlayerModalOpen(true)}>
                         <i className='bi bi-person-fill-add' />
                     </Button>
                 </OverlayTrigger>

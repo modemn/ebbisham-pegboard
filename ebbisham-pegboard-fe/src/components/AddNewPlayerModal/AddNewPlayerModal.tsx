@@ -34,6 +34,8 @@ const AddNewPlayerModal: React.FC = () => {
             name: values.firstName + ' ' + values.lastName,
             gender: values.gender,
             playStatus: EPlayStatus.NOT_PLAYING,
+            win: 0,
+            loss: 0,
         };
         const id = await addNewPlayer(newPlayerToAdd);
         addNewPlayerToStore({ ...newPlayerToAdd, id: id });
@@ -68,7 +70,7 @@ const AddNewPlayerModal: React.FC = () => {
                                     <Form noValidate onSubmit={handleSubmit} id='addNewPlayerForm'>
                                         <FormGroup className='mb-3' controlId='validationFormik01'>
                                             <FormLabel>First name</FormLabel>
-                                            <FormControl type='text' name='firstName' value={values.firstName} onChange={handleChange} isValid={touched.firstName && !errors.firstName} isInvalid={touched.firstName && !!errors.lastName} />
+                                            <FormControl type='text' name='firstName' value={values.firstName} onChange={handleChange} isValid={touched.firstName && !errors.firstName} isInvalid={touched.firstName && !!errors.firstName} />
                                             <FormControl.Feedback type='invalid'>{errors.firstName}</FormControl.Feedback>
                                         </FormGroup>
                                         <FormGroup className='mb-3' controlId='validationFormik02'>

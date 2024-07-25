@@ -76,7 +76,6 @@ export const pickNextGame = (): Map<number, TPlayer> => {
     const gameType = pickRandomWeightedChoice(['Level', 'Mixed', 'Funny'], [LevelDoublesWeight, MixedDoublesWeight, funnyDoublesWeight]);
 
     // Extract the players
-    // let players = [chairPlayer];
     const players = new Map<number, TPlayer>([[0, chairPlayer]]);
     if (gameType === 'Level') {
         [...playersInViewMatchingChairGender.slice(0, 3)].forEach((pl, i) => {
