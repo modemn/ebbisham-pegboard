@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { EPlayStatus, TCourt, TPlayer, TToastVariant } from './types';
-import { addPlayersToNextOn, recordMatch, resetCourt, resetNextOnPlayers, startCourt, updatePlayerPlayStatus, updatePlayerStats } from './firestore_utils';
+import { addPlayersToNextOn, recordMatch, resetCourt, resetNextOnPlayers, startCourt, updatePlayerPlayStatus, updatePlayer } from './firestore_utils';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { enableMapSet } from 'immer';
-import { shuffle } from './utils';
+import { getUpdatedMatchResultHistory, shuffle } from './utils';
+import { rate } from 'openskill';
 
 enableMapSet();
 
@@ -30,9 +31,11 @@ type State = {
     };
 
     gamePreferences: {
-        inViewNumber: number;
+        inViewNumber: number; // minimum of 4 since we need at least 4 players
         mixedPreference: number; // 0 = no priority, 0.99 = always mixed if possible
         maxCourts: number;
+        pairChoicePreference: 0 | 0.5 | 1 | 2 | 10; // 0 = Random, 0.5 = random weighted, 1 = as weighted, 2 = best weighted, 10 = best
+        returnOrder: 0 | 1 | 2; // 0 = random, 1 = winners returned first, 2 = interleave pairs
     };
 };
 
@@ -134,22 +137,82 @@ export const useGlobalStore = create<State & Action>()(
                 resetNextOnPlayers();
                 state.nextOnPlayers = new Map();
             }),
-        endMatchOnCourt: (court: TCourt, homeScore: number, awayScore: number, matchEndTime: number) =>
-            set((state) => {
-                let returnToQueueIndex = [0, 1, 2, 3];
-                returnToQueueIndex = shuffle(returnToQueueIndex);
+        endMatchOnCourt: async (court: TCourt, homeScore: number, awayScore: number, matchEndTime: number) => {
+            // Record the match in the database
+            const matchId = await recordMatch(court, homeScore, awayScore, matchEndTime);
 
-                returnToQueueIndex.forEach((i) => {
-                    const playerFromStore = state.players.get(court.players[i]) as TPlayer;
-                    state.players.set(court.players[i], { ...playerFromStore, win: playerFromStore.win + 1 });
-                    updatePlayerStats(court.players[i], playerFromStore.win + 1, playerFromStore.loss);
-                    state.addPlayerToQueue(playerFromStore);
+            set((state) => {
+                const homePair = [state.players.get(court.players[0]) as TPlayer, state.players.get(court.players[1]) as TPlayer];
+                const awayPair = [state.players.get(court.players[2]) as TPlayer, state.players.get(court.players[3]) as TPlayer];
+
+                homePair[0].matchHistory.push(matchId);
+                homePair[1].matchHistory.push(matchId);
+                awayPair[0].matchHistory.push(matchId);
+                awayPair[1].matchHistory.push(matchId);
+
+                // Get new ratings for the players depending on the result of the match
+                let newHomePair0Rating: { mu: number; sigma: number };
+                let newHomePair1Rating: { mu: number; sigma: number };
+                let newAwayPair0Rating: { mu: number; sigma: number };
+                let newAwayPair1Rating: { mu: number; sigma: number };
+
+                if (homeScore > awayScore) {
+                    [[newHomePair0Rating, newHomePair1Rating], [newAwayPair0Rating, newAwayPair1Rating]] = rate([
+                        [homePair[0].rating, homePair[1].rating],
+                        [awayPair[0].rating, awayPair[1].rating],
+                    ]);
+                    homePair[0].matchResultHistory = getUpdatedMatchResultHistory(homePair[0].matchResultHistory, 'W');
+                    homePair[1].matchResultHistory = getUpdatedMatchResultHistory(homePair[1].matchResultHistory, 'W');
+                    awayPair[0].matchResultHistory = getUpdatedMatchResultHistory(awayPair[0].matchResultHistory, 'L');
+                    awayPair[1].matchResultHistory = getUpdatedMatchResultHistory(awayPair[1].matchResultHistory, 'L');
+                } else {
+                    [[newHomePair0Rating, newHomePair1Rating], [newAwayPair0Rating, newAwayPair1Rating]] = rate([
+                        [awayPair[0].rating, awayPair[1].rating],
+                        [homePair[0].rating, homePair[1].rating],
+                    ]);
+                    awayPair[0].matchResultHistory = getUpdatedMatchResultHistory(awayPair[0].matchResultHistory, 'W');
+                    awayPair[1].matchResultHistory = getUpdatedMatchResultHistory(awayPair[1].matchResultHistory, 'W');
+                    homePair[0].matchResultHistory = getUpdatedMatchResultHistory(homePair[0].matchResultHistory, 'L');
+                    homePair[1].matchResultHistory = getUpdatedMatchResultHistory(homePair[1].matchResultHistory, 'L');
+                }
+                homePair[0].rating = newHomePair0Rating;
+                homePair[1].rating = newHomePair1Rating;
+                awayPair[0].rating = newAwayPair0Rating;
+                awayPair[1].rating = newAwayPair1Rating;
+
+                // Work out the order to return the players to the queue in
+                let playersInReturnOrder: TPlayer[] = [];
+                if (state.gamePreferences.returnOrder === 0) {
+                    // random order
+                    let returnToQueueIndex = [0, 1, 2, 3];
+                    let players = [...homePair, ...awayPair];
+                    returnToQueueIndex = shuffle(returnToQueueIndex);
+                    playersInReturnOrder = returnToQueueIndex.map((i) => players[i]);
+                } else if (state.gamePreferences.returnOrder === 1) {
+                    // winners returned first
+                    if (homeScore > awayScore) {
+                        playersInReturnOrder = [...homePair, ...awayPair];
+                    } else {
+                        playersInReturnOrder = [...awayPair, ...homePair];
+                    }
+                } else if (state.gamePreferences.returnOrder === 2) {
+                    // interleaving pairs
+                    playersInReturnOrder = [homePair[0], awayPair[0], homePair[1], awayPair[1]];
+                }
+
+                // Return the players and update their stats
+                playersInReturnOrder.forEach((player, i) => {
+                    player.playStatus = (Date.now() + i * 10).toString();
+                    state.players.set(player.id, player);
+                    updatePlayer(player.id, player);
+                    state.addPlayerToQueue(player);
                 });
 
                 state.courts = [];
-                recordMatch(court, homeScore, awayScore, matchEndTime);
+
                 resetCourt(court.id);
-            }),
+            });
+        },
 
         courts: [] as TCourt[],
         setCourts: (courts) =>
@@ -162,7 +225,12 @@ export const useGlobalStore = create<State & Action>()(
                 state.playersInQueue.set(player.id, player);
                 state.players.delete(player.id);
             });
-            updatePlayerPlayStatus(player.id, Date.now().toString());
+            if (!(player.playStatus in EPlayStatus)) {
+                // If the playStatus was manually set to a time, then use it
+                updatePlayerPlayStatus(player.id, player.playStatus);
+            } else {
+                updatePlayerPlayStatus(player.id, Date.now().toString());
+            }
         },
 
         removePlayerFromQueue: (player) => {
@@ -233,6 +301,8 @@ export const useGlobalStore = create<State & Action>()(
             inViewNumber: 8,
             mixedPreference: 0.5,
             maxCourts: 3,
+            pairChoicePreference: 0.5,
+            returnOrder: 2,
         },
         setInViewNumber: (inViewNumber) =>
             set((state) => {

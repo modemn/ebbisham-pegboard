@@ -16,15 +16,16 @@ export const addNewPlayer = async (newPlayer: TPlayer) => {
         name: newPlayer.name,
         gender: newPlayer.gender,
         playStatus: EPlayStatus.NOT_PLAYING,
-        win: 0,
-        loss: 0,
+        rating: { mu: 25, sigma: 8.333333333333334 },
+        matchResultHistory: '',
+        matchHistory: [],
     });
     return newPlayerRef.id;
 };
 
-export const updatePlayerStats = async (playerId: string, win: number, loss: number) => {
+export const updatePlayer = async (playerId: string, player: TPlayer) => {
     const playerRef = doc(db, 'players', playerId);
-    await updateDoc(playerRef, { win, loss });
+    await updateDoc(playerRef, { ...player });
 };
 
 export const addPlayersToNextOn = async (players: Map<number, TPlayer>) => {
@@ -91,4 +92,5 @@ export const recordMatch = async (court: TCourt, homeScore: number, awayScore: n
         matchStartTime: court.matchStartTime,
         matchEndTime,
     });
+    return newMatchRef.id;
 };

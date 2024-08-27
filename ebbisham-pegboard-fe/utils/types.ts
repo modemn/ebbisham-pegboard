@@ -2,9 +2,10 @@ export type TPlayer = {
     id: string;
     name: string;
     gender: string;
-    playStatus: EPlayStatus; // -1 is not playing. Timestamp is in queue. 0 is paused. 1 is next on. 2 is playing.
-    win: number;
-    loss: number;
+    playStatus: EPlayStatus | string; // string means it is set to the timestamp
+    matchResultHistory: string;
+    rating: { mu: number; sigma: number };
+    matchHistory: string[];
 };
 
 export type TCourt = {

@@ -1,13 +1,8 @@
+import { predictDraw } from 'openskill';
+
 import { useGlobalStore } from './store';
 import { TPlayer } from './types';
-
-const pickRandomWeightedChoice = (items: Array<any>, weights: Array<number>) => {
-    let i;
-    for (i = 1; i < weights.length; i++) weights[i] += weights[i - 1];
-    const random = Math.random() * weights[weights.length - 1];
-    for (i = 0; i < weights.length; i++) if (weights[i] > random) break;
-    return items[i];
-};
+import { pickRandomWeightedChoice } from './utils';
 
 export const canPick: () => { pickable: boolean; reason: string } = () => {
     if (useGlobalStore.getState().playersInQueue.size < 4) {
@@ -86,10 +81,52 @@ export const pickNextGame = (): Map<number, TPlayer> => {
         players.set(2, [...playersInViewMatchingChairGender.slice(0, 1)][0]);
         players.set(3, [...playersInViewNotMatchingChairGender.slice(1, 2)][0]);
     } else if (gameType === 'Funny') {
-        [...playersInViewNotMatchingChairGender.slice(0, 3)].forEach((pl, i) => {
+        [...playersInView.slice(1, 4)].forEach((pl, i) => {
             players.set(i + 1, pl);
         });
     }
+
+    // TODO: check the last matches of all the players and mix it up in clusters if the number of people playing in this match and their last match exceeds the mixItUpNumber
+
+    if (gameType === 'Funny') {
+        players.forEach((pl, i) => {
+            if (pl.gender === 'F') {
+                players.set(i, { ...pl, rating: { mu: pl.rating.mu - 10, sigma: pl.rating.sigma } });
+            }
+        });
+    }
+
+    // Extract the possible combinations of pairings depending on the type of gameType that was chosen
+    let possiblePairs: TPlayer[][];
+    if (gameType === 'Level' || gameType === 'Funny') {
+        possiblePairs = [Array.from(players.values()), [players.get(0) as TPlayer, players.get(2) as TPlayer, players.get(1) as TPlayer, players.get(3) as TPlayer], [players.get(0) as TPlayer, players.get(3) as TPlayer, players.get(2) as TPlayer, players.get(1) as TPlayer]];
+    } else {
+        possiblePairs = [Array.from(players.values()), [players.get(0) as TPlayer, players.get(3) as TPlayer, players.get(2) as TPlayer, players.get(1) as TPlayer]];
+    }
+
+    // Extract the weighting of the matches depending on the quality and pairChoicePreference for all the combinations of pairings
+    const possibleMatchQualitiesWeighting: number[] = [];
+    possiblePairs.forEach((possiblePair) => {
+        const matchQuality = predictDraw([
+            [
+                { mu: possiblePair[0].rating.mu, sigma: possiblePair[0].rating.sigma },
+                { mu: possiblePair[1].rating.mu, sigma: possiblePair[1].rating.sigma },
+            ],
+            [
+                { mu: possiblePair[2].rating.mu, sigma: possiblePair[2].rating.sigma },
+                { mu: possiblePair[3].rating.mu, sigma: possiblePair[3].rating.sigma },
+            ],
+        ]);
+        possibleMatchQualitiesWeighting.push((10 * (matchQuality as number)) ** useGlobalStore.getState().gamePreferences.pairChoicePreference);
+    });
+
+    // Pick the pairing with the pairs and weightings calculated above
+    const pickedPairs = pickRandomWeightedChoice(possiblePairs, possibleMatchQualitiesWeighting);
+    pickedPairs.forEach((player, i) => {
+        players.set(i, player);
+    });
+
+    // TODO: making sure this is a 'good' choice of pairing by looking at previous matches and switching up the pairings so people play with someone new
 
     return players;
 };

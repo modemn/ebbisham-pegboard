@@ -34,8 +34,9 @@ const AddNewPlayerModal: React.FC = () => {
             name: values.firstName + ' ' + values.lastName,
             gender: values.gender,
             playStatus: EPlayStatus.NOT_PLAYING,
-            win: 0,
-            loss: 0,
+            rating: { mu: 25, sigma: 8.333333333333334 },
+            matchResultHistory: '',
+            matchHistory: [],
         };
         const id = await addNewPlayer(newPlayerToAdd);
         addNewPlayerToStore({ ...newPlayerToAdd, id: id });
