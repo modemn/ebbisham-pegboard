@@ -15,6 +15,14 @@ export type TCourt = {
     players: { [key: number]: string };
 };
 
+export type TMatch = {
+    homeScore: number;
+    awayScore: number;
+    matchStartTime: number;
+    matchEndTime: number;
+    players: { [key: number]: string };
+};
+
 export type TToastVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'light' | 'dark';
 
 export enum EPlayStatus {

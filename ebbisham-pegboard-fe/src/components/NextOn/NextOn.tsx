@@ -39,11 +39,11 @@ const NextOn: React.FC = () => {
         }
     }, [nextOn, nextOnError, nextOnLoading, players, setNextOnPlayers]);
 
-    const handlePickNext = () => {
+    const handlePickNext = async () => {
         const { pickable, reason } = canPick();
         if (pickable) {
             setLoading(true);
-            const players = pickNextGame();
+            const players = await pickNextGame();
             addPlayersToNextOn(players);
             setLoading(false);
         } else {

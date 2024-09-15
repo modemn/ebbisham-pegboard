@@ -36,6 +36,7 @@ type State = {
         maxCourts: number;
         pairChoicePreference: 0 | 0.5 | 1 | 2 | 10; // 0 = Random, 0.5 = random weighted, 1 = as weighted, 2 = best weighted, 10 = best
         returnOrder: 0 | 1 | 2; // 0 = random, 1 = winners returned first, 2 = interleave pairs
+        mixItUpNumber: 1 | 2 | 3 | 4;
     };
 };
 
@@ -225,7 +226,7 @@ export const useGlobalStore = create<State & Action>()(
                 state.playersInQueue.set(player.id, player);
                 state.players.delete(player.id);
             });
-            if (!(player.playStatus in EPlayStatus)) {
+            if (Number(player.playStatus) > 2) {
                 // If the playStatus was manually set to a time, then use it
                 updatePlayerPlayStatus(player.id, player.playStatus);
             } else {
@@ -303,6 +304,7 @@ export const useGlobalStore = create<State & Action>()(
             maxCourts: 3,
             pairChoicePreference: 0.5,
             returnOrder: 2,
+            mixItUpNumber: 2,
         },
         setInViewNumber: (inViewNumber) =>
             set((state) => {

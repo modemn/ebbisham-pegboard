@@ -1,5 +1,5 @@
-import { doc, updateDoc, setDoc, collection, deleteDoc } from 'firebase/firestore';
-import { EPlayStatus, TCourt, TPlayer } from './types';
+import { doc, updateDoc, setDoc, collection, deleteDoc, getDoc } from 'firebase/firestore';
+import { EPlayStatus, TCourt, TMatch, TPlayer } from './types';
 import { db } from '@ebb-firebase/clientApp';
 import { useGlobalStore } from './store';
 
@@ -93,4 +93,12 @@ export const recordMatch = async (court: TCourt, homeScore: number, awayScore: n
         matchEndTime,
     });
     return newMatchRef.id;
+};
+
+export const getMatchById = async (matchId: string | undefined) => {
+    if (!matchId) return undefined;
+    const sessionId = useGlobalStore.getState().sessionId;
+    const matchRef = doc(db, 'sessions', sessionId, 'matches', matchId);
+    const match = await getDoc(matchRef);
+    return match.data() as TMatch | undefined;
 };
