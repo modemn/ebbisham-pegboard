@@ -53,9 +53,17 @@ const PlayerList = () => {
             <h3 className='mx-2 mb-3'>Players Queue</h3>
             <div className={styles.inputRow}>
                 <Combobox
-                    data={Array.from(players.values()).filter((player) => {
-                        return Number(player.playStatus) === Number(EPlayStatus.NOT_PLAYING);
-                    })}
+                    data={Array.from(players.values())
+                        .filter((player) => {
+                            return Number(player.playStatus) === Number(EPlayStatus.NOT_PLAYING);
+                        })
+                        .sort((a, b) => {
+                            const nameA = a.name.toLowerCase();
+                            const nameB = b.name.toLowerCase();
+                            if (nameA < nameB) return -1;
+                            if (nameA > nameB) return 1;
+                            return 0;
+                        })}
                     dataKey='id'
                     textField='name'
                     renderListItem={({ item }) => <span>{item.name}</span>}

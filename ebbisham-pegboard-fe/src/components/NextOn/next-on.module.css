@@ -2,3 +2,8 @@
     margin: 1.25rem 0;
     text-align: center;
 }
+
+.nextOnPlayer {
+    display: flex;
+    justify-content: space-around;
+}

@@ -130,13 +130,65 @@ const NextOn: React.FC = () => {
                     {!loading && nextOnPlayers.size > 0 && (
                         <>
                             <ListGroup className='text-center'>
-                                <ListGroupItem>{(nextOnPlayers.get(0) as TPlayer).name}</ListGroupItem>
-                                <ListGroupItem>{(nextOnPlayers.get(1) as TPlayer).name}</ListGroupItem>
+                                <ListGroupItem>
+                                    <div className={styles.nextOnPlayer}>
+                                        {(nextOnPlayers.get(0) as TPlayer).name}
+                                        <Button
+                                            variant='outline-secondary'
+                                            size='sm'
+                                            onClick={() => {
+                                                console.log('swap player', (nextOnPlayers.get(0) as TPlayer).name);
+                                            }}
+                                        >
+                                            <i className='bi bi-arrow-left-right' />
+                                        </Button>
+                                    </div>
+                                </ListGroupItem>
+                                <ListGroupItem>
+                                    <div className={styles.nextOnPlayer}>
+                                        {(nextOnPlayers.get(1) as TPlayer).name}
+                                        <Button
+                                            variant='outline-secondary'
+                                            size='sm'
+                                            onClick={() => {
+                                                console.log('swap player', (nextOnPlayers.get(1) as TPlayer).name);
+                                            }}
+                                        >
+                                            <i className='bi bi-arrow-left-right' />
+                                        </Button>
+                                    </div>
+                                </ListGroupItem>
                             </ListGroup>
                             <h4 className={styles.vs}>VS</h4>
                             <ListGroup className='text-center'>
-                                <ListGroupItem>{(nextOnPlayers.get(2) as TPlayer).name}</ListGroupItem>
-                                <ListGroupItem>{(nextOnPlayers.get(3) as TPlayer).name}</ListGroupItem>
+                                <ListGroupItem>
+                                    <div className={styles.nextOnPlayer}>
+                                        {(nextOnPlayers.get(2) as TPlayer).name}
+                                        <Button
+                                            variant='outline-secondary'
+                                            size='sm'
+                                            onClick={() => {
+                                                console.log('swap player', (nextOnPlayers.get(2) as TPlayer).name);
+                                            }}
+                                        >
+                                            <i className='bi bi-arrow-left-right' />
+                                        </Button>
+                                    </div>
+                                </ListGroupItem>
+                                <ListGroupItem>
+                                    <div className={styles.nextOnPlayer}>
+                                        {(nextOnPlayers.get(3) as TPlayer).name}
+                                        <Button
+                                            variant='outline-secondary'
+                                            size='sm'
+                                            onClick={() => {
+                                                console.log('swap player', (nextOnPlayers.get(3) as TPlayer).name);
+                                            }}
+                                        >
+                                            <i className='bi bi-arrow-left-right' />
+                                        </Button>
+                                    </div>
+                                </ListGroupItem>
                             </ListGroup>
                         </>
                     )}

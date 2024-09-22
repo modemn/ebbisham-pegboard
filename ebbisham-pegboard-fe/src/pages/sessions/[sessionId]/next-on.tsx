@@ -29,7 +29,9 @@ export default function NextOnPage({ sessionId }: InferGetServerSidePropsType<ty
             const allPlayersFromDB = playersFromDB.docs.map((doc) => ({ id: doc.id, ...doc.data() } as TPlayer));
             setPlayers(new Map(allPlayersFromDB.map((p) => [p.id, p])));
         }
+    }, [playersFromDB, playersFromDBError, playersFromDBLoading]);
 
+    useEffect(() => {
         if (!nextOnLoading && !nextOnError && nextOn) {
             const nextOnPlayerMap = new Map<number, TPlayer>();
             nextOn.docs.forEach((doc) => {
@@ -47,7 +49,7 @@ export default function NextOnPage({ sessionId }: InferGetServerSidePropsType<ty
                 setNextOnPlayers(nextOnPlayerMap);
             }
         }
-    }, [nextOn, nextOnError, nextOnLoading, playersFromDB, playersFromDBLoading, playersFromDBError]);
+    }, [nextOn, nextOnError, nextOnLoading, playersFromDB, playersFromDBLoading, playersFromDBError, players]);
 
     return (
         <div>

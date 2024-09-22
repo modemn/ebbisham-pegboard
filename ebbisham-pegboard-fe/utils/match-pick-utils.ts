@@ -67,7 +67,7 @@ export const pickNextGame = async (): Promise<Map<number, TPlayer>> => {
     console.debug('~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
     console.debug('STARTING SELECTION ALGORITHM');
     console.debug();
-    while (!goodGameFound || goodGameSearchAttempts < GOOD_GAME_SEARCH_LIMIT) {
+    while (!goodGameFound && goodGameSearchAttempts < GOOD_GAME_SEARCH_LIMIT) {
         goodGameSearchAttempts++;
 
         // #########################################################################################
@@ -183,6 +183,7 @@ export const pickNextGame = async (): Promise<Map<number, TPlayer>> => {
                 for (let index = 0; index < playerClusters.length; index++) {
                     let shuffleAttempts = 0;
                     while (shuffleAttempts < 10) {
+                        shuffleAttempts++;
                         if (playerClusters[index].length > 0) {
                             const shuffledCluster = shuffle(playerClusters[index]);
                             if (JSON.stringify(shuffledCluster) === JSON.stringify(playerClusters[index])) {
