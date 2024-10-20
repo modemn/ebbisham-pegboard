@@ -1,7 +1,7 @@
 import { predictDraw } from 'openskill';
 
 import { useGlobalStore } from './store';
-import { TMatch, TPlayer } from './types';
+import { TPlayer } from './types';
 import { pickRandomWeightedChoice, shuffle } from './utils';
 import { FUNNY_FEMALE_RATING_CHANGE, GOOD_GAME_SEARCH_LIMIT, MIN_NUM_TO_CLUSTER } from './constants';
 import skmeans from 'skmeans';

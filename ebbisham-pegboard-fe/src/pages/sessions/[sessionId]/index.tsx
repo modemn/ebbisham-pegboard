@@ -12,6 +12,7 @@ import AddNewPlayerModal from '@/components/AddNewPlayerModal/AddNewPlayerModal'
 import StopPlayerModal from '@/components/StopPlayerModal/StopPlayerModal';
 import { InferGetServerSidePropsType } from 'next';
 import EndMatchModal from '@/components/EndMatchModal/EndMatchModal';
+import SwapPlayerModal from '@/components/SwapPlayerModal/SwapPlayerModal';
 
 export const getServerSideProps = async (context: any) => {
     const sessionsRef = doc(db, 'sessions', context.query.sessionId);
@@ -35,6 +36,7 @@ export default function SessionPage({ sessionId }: InferGetServerSidePropsType<t
     return (
         <>
             <AddNewPlayerModal />
+            <SwapPlayerModal />
             <StopPlayerModal />
             <EndMatchModal />
             <ToastContainer className='p-3' position={'top-end'} style={{ zIndex: 1 }}>

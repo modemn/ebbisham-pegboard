@@ -18,6 +18,7 @@ const NextOn: React.FC = () => {
     const [sessionId] = useGlobalStore((state) => [state.sessionId]);
     const [players] = useGlobalStore((state) => [state.players]);
     const [playersInQueue] = useGlobalStore((state) => [state.playersInQueue]);
+    const [setIsSwapPlayerModalOpen] = useGlobalStore((state) => [state.setIsSwapPlayerModalOpen]);
 
     const [nextOn, nextOnLoading, nextOnError] = useCollection(collection(db, 'sessions', sessionId, 'nextOn'), {});
 
@@ -137,7 +138,7 @@ const NextOn: React.FC = () => {
                                             variant='outline-secondary'
                                             size='sm'
                                             onClick={() => {
-                                                console.log('swap player', (nextOnPlayers.get(0) as TPlayer).name);
+                                                setIsSwapPlayerModalOpen(nextOnPlayers.get(0) as TPlayer);
                                             }}
                                         >
                                             <i className='bi bi-arrow-left-right' />
@@ -151,7 +152,7 @@ const NextOn: React.FC = () => {
                                             variant='outline-secondary'
                                             size='sm'
                                             onClick={() => {
-                                                console.log('swap player', (nextOnPlayers.get(1) as TPlayer).name);
+                                                setIsSwapPlayerModalOpen(nextOnPlayers.get(1) as TPlayer);
                                             }}
                                         >
                                             <i className='bi bi-arrow-left-right' />
@@ -168,7 +169,7 @@ const NextOn: React.FC = () => {
                                             variant='outline-secondary'
                                             size='sm'
                                             onClick={() => {
-                                                console.log('swap player', (nextOnPlayers.get(2) as TPlayer).name);
+                                                setIsSwapPlayerModalOpen(nextOnPlayers.get(2) as TPlayer);
                                             }}
                                         >
                                             <i className='bi bi-arrow-left-right' />
@@ -182,7 +183,7 @@ const NextOn: React.FC = () => {
                                             variant='outline-secondary'
                                             size='sm'
                                             onClick={() => {
-                                                console.log('swap player', (nextOnPlayers.get(3) as TPlayer).name);
+                                                setIsSwapPlayerModalOpen(nextOnPlayers.get(3) as TPlayer);
                                             }}
                                         >
                                             <i className='bi bi-arrow-left-right' />

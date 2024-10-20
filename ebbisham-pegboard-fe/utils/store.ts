@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { EPlayStatus, TCourt, TPlayer, TToastVariant } from './types';
-import { addPlayersToNextOn, recordMatch, resetCourt, resetNextOnPlayers, startCourt, updatePlayerPlayStatus, updatePlayer } from './firestore_utils';
+import { addPlayersToNextOn, recordMatch, resetCourt, resetNextOnPlayers, startCourt, updatePlayerPlayStatus, updatePlayer, updatePlayerNextOn } from './firestore_utils';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { enableMapSet } from 'immer';
 import { getUpdatedMatchResultHistory, shuffle } from './utils';
@@ -22,6 +22,7 @@ type State = {
     isStopPlayerModalOpen: TPlayer | null;
     isAddNewPlayerModalOpen: boolean;
     isEndMatchModalOpen: TCourt | null;
+    isSwapPlayerModalOpen: TPlayer | null;
 
     toastNotification: {
         isOpen: boolean;
@@ -55,6 +56,7 @@ type Action = {
 
     setNextOnPlayers: (players: Map<number, TPlayer>) => void;
     addPlayersToNextOn: (players: Map<number, TPlayer>) => void;
+    swapPlayers: (playerInNextOn: TPlayer, playerInQueue: TPlayer) => void;
     returnNextOnPlayersToQueue: () => void;
 
     setCourts: (courts: TCourt[]) => void;
@@ -64,6 +66,7 @@ type Action = {
     setIsStopPlayerModalOpen: (player: TPlayer | null) => void;
     setIsAddNewPlayerModalOpen: (isOpen: boolean) => void;
     setIsEndMatchModalOpen: (court: TCourt | null) => void;
+    setIsSwapPlayerModalOpen: (court: TPlayer | null) => void;
 
     setToastNotification: (isOpen: boolean, message?: string, title?: string, variant?: TToastVariant) => void;
 
@@ -119,6 +122,31 @@ export const useGlobalStore = create<State & Action>()(
             });
             addPlayersToNextOn(players);
         },
+        swapPlayers: (playerInNextOn, playerInQueue) => {
+            set((state) => {
+                const queuePosition = playerInQueue.playStatus;
+
+                let nextOnKey = -1;
+                for (const [key, player] of Array.from(state.nextOnPlayers)) {
+                    if (player.id === playerInNextOn.id) {
+                        nextOnKey = key;
+                        break;
+                    }
+                }
+
+                if (nextOnKey > -1) {
+                    state.nextOnPlayers.delete(nextOnKey);
+                    state.nextOnPlayers.set(nextOnKey, playerInQueue);
+
+                    state.playersInQueue.delete(playerInQueue.id);
+                    state.playersInQueue.set(playerInNextOn.id, playerInNextOn);
+
+                    updatePlayerNextOn(playerInQueue.id, nextOnKey);
+                    updatePlayerPlayStatus(playerInNextOn.id, queuePosition);
+                    updatePlayerPlayStatus(playerInQueue.id, EPlayStatus.NEXT);
+                }
+            });
+        },
         returnNextOnPlayersToQueue: () => {
             set((state) => {
                 state.nextOnPlayers.forEach((player) => {
@@ -157,29 +185,42 @@ export const useGlobalStore = create<State & Action>()(
                 let newAwayPair0Rating: { mu: number; sigma: number };
                 let newAwayPair1Rating: { mu: number; sigma: number };
 
-                if (homeScore > awayScore) {
-                    [[newHomePair0Rating, newHomePair1Rating], [newAwayPair0Rating, newAwayPair1Rating]] = rate([
-                        [homePair[0].rating, homePair[1].rating],
-                        [awayPair[0].rating, awayPair[1].rating],
-                    ]);
-                    homePair[0].matchResultHistory = getUpdatedMatchResultHistory(homePair[0].matchResultHistory, 'W');
-                    homePair[1].matchResultHistory = getUpdatedMatchResultHistory(homePair[1].matchResultHistory, 'W');
-                    awayPair[0].matchResultHistory = getUpdatedMatchResultHistory(awayPair[0].matchResultHistory, 'L');
-                    awayPair[1].matchResultHistory = getUpdatedMatchResultHistory(awayPair[1].matchResultHistory, 'L');
-                } else {
-                    [[newHomePair0Rating, newHomePair1Rating], [newAwayPair0Rating, newAwayPair1Rating]] = rate([
-                        [awayPair[0].rating, awayPair[1].rating],
-                        [homePair[0].rating, homePair[1].rating],
-                    ]);
-                    awayPair[0].matchResultHistory = getUpdatedMatchResultHistory(awayPair[0].matchResultHistory, 'W');
-                    awayPair[1].matchResultHistory = getUpdatedMatchResultHistory(awayPair[1].matchResultHistory, 'W');
-                    homePair[0].matchResultHistory = getUpdatedMatchResultHistory(homePair[0].matchResultHistory, 'L');
-                    homePair[1].matchResultHistory = getUpdatedMatchResultHistory(homePair[1].matchResultHistory, 'L');
+                // Get the genders of the players, if there is a ratio of 1:4 then do not update the ratings
+                const genderCounts: { [key: string]: number } = {
+                    M: 0,
+                    F: 0,
+                };
+
+                const allPlayers = [...homePair, ...awayPair];
+                allPlayers.forEach((player) => {
+                    genderCounts[player.gender] += 1;
+                });
+
+                if (genderCounts.M > 1 && genderCounts.F > 1) {
+                    if (homeScore > awayScore) {
+                        [[newHomePair0Rating, newHomePair1Rating], [newAwayPair0Rating, newAwayPair1Rating]] = rate([
+                            [homePair[0].rating, homePair[1].rating],
+                            [awayPair[0].rating, awayPair[1].rating],
+                        ]);
+                        homePair[0].matchResultHistory = getUpdatedMatchResultHistory(homePair[0].matchResultHistory, 'W');
+                        homePair[1].matchResultHistory = getUpdatedMatchResultHistory(homePair[1].matchResultHistory, 'W');
+                        awayPair[0].matchResultHistory = getUpdatedMatchResultHistory(awayPair[0].matchResultHistory, 'L');
+                        awayPair[1].matchResultHistory = getUpdatedMatchResultHistory(awayPair[1].matchResultHistory, 'L');
+                    } else {
+                        [[newHomePair0Rating, newHomePair1Rating], [newAwayPair0Rating, newAwayPair1Rating]] = rate([
+                            [awayPair[0].rating, awayPair[1].rating],
+                            [homePair[0].rating, homePair[1].rating],
+                        ]);
+                        awayPair[0].matchResultHistory = getUpdatedMatchResultHistory(awayPair[0].matchResultHistory, 'W');
+                        awayPair[1].matchResultHistory = getUpdatedMatchResultHistory(awayPair[1].matchResultHistory, 'W');
+                        homePair[0].matchResultHistory = getUpdatedMatchResultHistory(homePair[0].matchResultHistory, 'L');
+                        homePair[1].matchResultHistory = getUpdatedMatchResultHistory(homePair[1].matchResultHistory, 'L');
+                    }
+                    homePair[0].rating = newHomePair0Rating;
+                    homePair[1].rating = newHomePair1Rating;
+                    awayPair[0].rating = newAwayPair0Rating;
+                    awayPair[1].rating = newAwayPair1Rating;
                 }
-                homePair[0].rating = newHomePair0Rating;
-                homePair[1].rating = newHomePair1Rating;
-                awayPair[0].rating = newAwayPair0Rating;
-                awayPair[1].rating = newAwayPair1Rating;
 
                 // Work out the order to return the players to the queue in
                 let playersInReturnOrder: TPlayer[] = [];
@@ -276,6 +317,12 @@ export const useGlobalStore = create<State & Action>()(
         setIsEndMatchModalOpen: (court: TCourt | null) =>
             set((state) => {
                 state.isEndMatchModalOpen = court;
+            }),
+
+        isSwapPlayerModalOpen: null,
+        setIsSwapPlayerModalOpen: (player: TPlayer | null) =>
+            set((state) => {
+                state.isSwapPlayerModalOpen = player;
             }),
 
         toastNotification: {

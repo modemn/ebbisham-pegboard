@@ -38,6 +38,15 @@ export const addPlayersToNextOn = async (players: Map<number, TPlayer>) => {
     });
 };
 
+export const updatePlayerNextOn = async (playerId: string, key: number) => {
+    const sessionId = useGlobalStore.getState().sessionId;
+    const nextOnRef = doc(db, 'sessions', sessionId, 'nextOn', String(key));
+    const foo = await updateDoc(nextOnRef, {
+        playerId: playerId,
+    });
+    console.log(foo);
+};
+
 export const resetNextOnPlayers = async () => {
     const sessionId = useGlobalStore.getState().sessionId;
     for (const i in [0, 1, 2, 3]) {
